@@ -1,213 +1,188 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<title>My Spotify</title>
+<meta charset="UTF-8">
+<title>Mini Spotify Player</title>
 
 <style>
-
 body{
 background:#121212;
-color:white;
-font-family:Arial;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
-margin:0;
+font-family:Arial;
 }
 
 .player{
-width:380px;
+width:360px;
 background:#181818;
-padding:20px;
-border-radius:15px;
-}
-
-.cover{
-width:100%;
-height:200px;
-background:#333;
-border-radius:10px;
-margin-bottom:15px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:50px;
-}
-
-.title{
-font-size:18px;
-margin-bottom:10px;
-}
-
-.controls{
-margin-top:10px;
-}
-
-button{
-background:#1db954;
-border:none;
-padding:10px 15px;
-margin:5px;
 border-radius:20px;
+padding:20px;
+box-shadow:0 10px 40px rgba(0,0,0,0.6);
 color:white;
-cursor:pointer;
+}
+
+.song-name{
+text-align:center;
+font-size:18px;
+margin-bottom:15px;
 }
 
 .progress{
 width:100%;
-}
-
-.playlist{
-margin-top:20px;
-max-height:150px;
-overflow:auto;
-}
-
-.song{
-padding:8px;
-border-bottom:1px solid #333;
+height:6px;
+background:#333;
+border-radius:10px;
+overflow:hidden;
 cursor:pointer;
 }
 
-.song:hover{
-background:#282828;
+.progress-bar{
+height:100%;
+width:0%;
+background:#1db954;
+transition:width 0.1s linear;
 }
 
-</style>
+.controls{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:25px;
+margin-top:20px;
+}
 
+.btn{
+width:45px;
+height:45px;
+border-radius:50%;
+background:#282828;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+font-size:18px;
+transition:0.2s;
+}
+
+.btn:hover{
+background:#1db954;
+transform:scale(1.1);
+}
+
+.play{
+width:60px;
+height:60px;
+font-size:22px;
+background:#1db954;
+color:black;
+}
+
+.play:hover{
+transform:scale(1.15);
+}
+</style>
 </head>
 
 <body>
 
 <div class="player">
 
-<div class="cover">🎵</div>
+<div class="song-name" id="songName">
+Song 1
+</div>
 
-<div id="title">Loading...</div>
-
-<audio id="audio"></audio>
-
-<input type="range" id="progress" class="progress">
+<div class="progress" id="progress">
+<div class="progress-bar" id="progressBar"></div>
+</div>
 
 <div class="controls">
 
-<button onclick="prevSong()">⏮</button>
-<button onclick="playPause()">▶</button>
-<button onclick="nextSong()">⏭</button>
+<div class="btn" id="prev">⏮</div>
+
+<div class="btn play" id="play">▶</div>
+
+<div class="btn" id="next">⏭</div>
 
 </div>
 
-<div class="playlist" id="playlist"></div>
-
 </div>
+
+<audio id="audio"></audio>
 
 <script>
 
-const songs = [
-
+const songs=[
 {name:"Song 1",src:"songs/song1.mp3"},
 {name:"Song 2",src:"songs/song2.mp3"},
 {name:"Song 3",src:"songs/song3.mp3"}
+]
 
-];
+let index=0
 
-let songIndex = 0;
-
-const audio=document.getElementById("audio");
-const title=document.getElementById("title");
-const progress=document.getElementById("progress");
-const playlist=document.getElementById("playlist");
+const audio=document.getElementById("audio")
+const playBtn=document.getElementById("play")
+const nextBtn=document.getElementById("next")
+const prevBtn=document.getElementById("prev")
+const progress=document.getElementById("progress")
+const progressBar=document.getElementById("progressBar")
+const songName=document.getElementById("songName")
 
 function loadSong(){
-
-audio.src=songs[songIndex].src;
-title.innerText=songs[songIndex].name;
-
+audio.src=songs[index].src
+songName.innerText=songs[index].name
 }
 
-function playPause(){
+function playSong(){
+audio.play()
+playBtn.innerText="⏸"
+}
 
+function pauseSong(){
+audio.pause()
+playBtn.innerText="▶"
+}
+
+playBtn.onclick=()=>{
 if(audio.paused){
-
-audio.play();
-
+playSong()
 }else{
-
-audio.pause();
-
+pauseSong()
+}
 }
 
+nextBtn.onclick=()=>{
+index++
+if(index>=songs.length) index=0
+loadSong()
+playSong()
 }
 
-function nextSong(){
-
-songIndex++;
-
-if(songIndex>=songs.length){
-
-songIndex=0;
-
+prevBtn.onclick=()=>{
+index--
+if(index<0) index=songs.length-1
+loadSong()
+playSong()
 }
-
-loadSong();
-audio.play();
-
-}
-
-function prevSong(){
-
-songIndex--;
-
-if(songIndex<0){
-
-songIndex=songs.length-1;
-
-}
-
-loadSong();
-audio.play();
-
-}
-
-audio.addEventListener("ended",nextSong);
 
 audio.addEventListener("timeupdate",()=>{
+const percent=(audio.currentTime/audio.duration)*100
+progressBar.style.width=percent+"%"
+})
 
-progress.value=(audio.currentTime/audio.duration)*100;
+progress.onclick=(e)=>{
+const width=progress.clientWidth
+const clickX=e.offsetX
+const duration=audio.duration
+audio.currentTime=(clickX/width)*duration
+}
 
-});
+audio.onended=()=>{
+nextBtn.onclick()
+}
 
-progress.addEventListener("input",()=>{
-
-audio.currentTime=(progress.value/100)*audio.duration;
-
-});
-
-songs.forEach((song,index)=>{
-
-const div=document.createElement("div");
-
-div.classList.add("song");
-
-div.innerText=song.name;
-
-div.onclick=()=>{
-
-songIndex=index;
-
-loadSong();
-
-audio.play();
-
-};
-
-playlist.appendChild(div);
-
-});
-
-loadSong();
+loadSong()
 
 </script>
 
